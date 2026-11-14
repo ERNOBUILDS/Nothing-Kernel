@@ -1,0 +1,58 @@
+Nothing sweet2 v3 performance governor policy (UNBOOTED-TEST)
+==========================================================
+
+Classification: source-justified policy port, not a measured performance fix.
+The replacement base has never been booted on the intended phone. V2 remains
+the booted fallback; historical v2 vendor captures are not new v3 measurements.
+
+Saved vendor init.qcom.post_boot.sh and sweet_postboot.sh select schedutil or
+other available governors after boot. The latter starts at sys.boot_completed=1
+and writes CPU minima 576000/652800 kHz. Those files establish possible ROM
+policy writers; they do not identify the present writer of every maximum drop.
+
+CONFIG_CPU_FREQ_SWEET2_PERFORMANCE retains performance when a valid userspace
+request selects another governor on policies 0/6. Other governors stay compiled
+and enumerated. Unknown names still return EINVAL. Successful writes must be
+followed by scaling_governor readback: the effective selection is performance,
+not necessarily the requested name. A rate-limited message identifies task/PID
+for intercepted governor requests; it is not a trace of min/max writers.
+
+The Kconfig dependency is adapted to MACH_XIAOMI_SWEET, not v2's ARCH_SM6150:
+beta1 builds sweet on ARCH_SDMMAGPIE and ARCH_SM6150 is disabled. This scoping
+is not evidence of explicit sweet2 hardware support; that remains unverified.
+
+The read-only parameter /sys/module/cpufreq/parameters/sweet2_performance has a
+boot-command-line opt-out: cpufreq.sweet2_performance=0. Booting the previous
+kernel also restores its governor behavior. No ramdisk service, KernelSU module,
+/data script, persistent property or governor/max polling loop is added by this
+port. The Image-only ZIP preserves the installed command line and ramdisk.
+
+Performance requests the highest frequency allowed by the existing policy.
+The OSM driver reads its hardware LUT and constructs the valid frequency table;
+freq_table.c seeds policy/cpuinfo minimum and maximum from that detected table.
+The old 1804800/1843200 kHz raised-initial-minimum port is deliberately excluded.
+No hard-coded maximum or min=max pin is introduced. The owner's expected
+1804800/2304000 kHz maxima are not verified as reachable OPPs in v3.
+
+All user_policy min/max storage, driver validation, cpufreq notifiers, cooling
+ceilings/floors and thermal trips retain beta1 behavior. A thermal ceiling may
+temporarily collapse effective min/max; the saved user request is reapplied on
+policy updates unless another writer changes it. No runtime persistence claim
+is made. This governor override can increase battery consumption and heat;
+it does not bypass protection or guarantee the requested physical frequency.
+
+No soft thresholds are raised: the complete controlling vendor rule is not
+decoded and no fresh temperature/cooling/writer samples are authorized. Do not
+assume cool-device caps are thermal, or assume they are not, without those data.
+
+Remaining runtime checks (owner-run, not executed here):
+- Boot/root/manager compatibility on the new base and actual policies/top OPPs.
+- Governor/min/max/cur_freq readback at boot and +5 minutes and under light load.
+- A short per-cluster load with temperatures, cooling states and frequency traces.
+- Legal min/max sysfs write/readback, later readback, and attribution of rewrites.
+- Compare selectable cpufreq table and OSM LUT against actual reached clocks;
+  separate userspace policy, governor, thermal, PM QoS and firmware/LUT limits.
+
+O2/generic arm64/ThinLTO are retained; no O3/A76 experiment is included.
+No overclock, GPU/KGSL tuning beyond the process-reference fix, pstore/observer,
+thermal bypass, SELinux/AVB/dm-verity change or F2FS safeguard weakening is added.

@@ -123,6 +123,16 @@ config CPU_FREQ_DEFAULT_GOV_INTERACTIVE
 
 endchoice
 
+config CPU_FREQ_SWEET2_PERFORMANCE
+	bool "Keep sweet2 CPU policies on the performance governor"
+	depends on MACH_XIAOMI_SWEET && CPU_FREQ_DEFAULT_GOV_PERFORMANCE
+	help
+	  Keep valid userspace governor requests on performance for sweet2
+	  policies 0 and 6. Frequency limits and thermal cooling still apply.
+	  This overrides ROM and tuning-app governor selections for this boot.
+	  Use cpufreq.sweet2_performance=0 on the kernel command line to opt out,
+	  or boot a kernel without this option. If in doubt, say N.
+
 config CPU_FREQ_GOV_PERFORMANCE
 	tristate "'performance' governor"
 	help

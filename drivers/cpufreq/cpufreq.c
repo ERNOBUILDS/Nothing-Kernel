@@ -26,6 +26,7 @@
 #include <linux/kernel_stat.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
+#include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/suspend.h>
 #include <linux/syscore_ops.h>
@@ -71,6 +72,12 @@ static DEFINE_RWLOCK(cpufreq_driver_lock);
 
 /* Flag to suspend/resume CPUFreq governors */
 static bool cpufreq_suspended;
+
+static bool sweet2_performance __read_mostly =
+	IS_ENABLED(CONFIG_CPU_FREQ_SWEET2_PERFORMANCE);
+module_param(sweet2_performance, bool, 0444);
+MODULE_PARM_DESC(sweet2_performance,
+	"Keep sweet2 policies 0 and 6 on performance within normal frequency limits");
 
 static inline bool has_target(void)
 {
@@ -796,6 +803,18 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 	if (cpufreq_parse_governor(str_governor, &new_policy.policy,
 						&new_policy.governor))
 		return -EINVAL;
+
+	if (IS_ENABLED(CONFIG_CPU_FREQ_SWEET2_PERFORMANCE) &&
+	    sweet2_performance && has_target() &&
+	    (policy->cpu == 0 || policy->cpu == 6) &&
+	    strcmp(new_policy.governor->name, "performance")) {
+		/* Keep a valid request within the boot-scoped governor policy. */
+		pr_info_ratelimited("sweet2: %s[%d] requested %s on policy%u; keeping performance\n",
+			current->comm, task_pid_nr(current), str_governor, policy->cpu);
+		if (cpufreq_parse_governor("performance", &new_policy.policy,
+					 &new_policy.governor))
+			return -EINVAL;
+	}
 
 	ret = cpufreq_set_policy(policy, &new_policy);
 	return ret ? ret : count;
