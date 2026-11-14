@@ -778,20 +778,21 @@ static bool kgsl_iommu_suppress_pagefault(uint64_t faultaddr, int write,
 
 static struct kgsl_process_private *kgsl_iommu_identify_process(u64 ptbase)
 {
-	struct kgsl_process_private *p = NULL;
+	struct kgsl_process_private *p, *private = NULL;
 	struct kgsl_iommu_pt *iommu_pt;
 
 	mutex_lock(&kgsl_driver.process_mutex);
 	list_for_each_entry(p, &kgsl_driver.process_list, list) {
 		iommu_pt = p->pagetable->priv;
 		if (iommu_pt->ttbr0 == ptbase) {
-			mutex_unlock(&kgsl_driver.process_mutex);
-			return p;
+			if (kgsl_process_private_get(p))
+				private = p;
+			break;
 		}
 	}
 
 	mutex_unlock(&kgsl_driver.process_mutex);
-	return p;
+	return private;
 }
 
 static int kgsl_iommu_fault_handler(struct iommu_domain *domain,
@@ -841,13 +842,12 @@ static int kgsl_iommu_fault_handler(struct iommu_domain *domain,
 	ptbase = KGSL_IOMMU_GET_CTX_REG_Q(ctx, TTBR0);
 	private = kgsl_iommu_identify_process(ptbase);
 
-	if (!kgsl_process_private_get(private))
-		private = NULL;
-	else
+	if (private)
 		pid = pid_nr(private->pid);
 
 	if (kgsl_iommu_suppress_pagefault(addr, write, private)) {
 		iommu->pagefault_suppression_count++;
+		kgsl_process_private_put(private);
 		return ret;
 	}
 
