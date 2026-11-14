@@ -17,6 +17,13 @@ followed by scaling_governor readback: the effective selection is performance,
 not necessarily the requested name. A rate-limited message identifies task/PID
 for intercepted governor requests; it is not a trace of min/max writers.
 
+The legacy CPU_BOOST driver is restored because the saved vendor post-boot script
+writes its cpu_boost/parameters interface. Its input defaults remain 40 ms and
+1497600/1843200 kHz, unless userspace supplies its own settings. Beta1's separate
+CPU_INPUT_BOOST driver is retained, not disabled or retuned. Both act through
+ordinary policy adjustment and leave thermal validation in place; coexistence
+and runtime effectiveness are untested, not a reason to pin policy minima.
+
 The Kconfig dependency is adapted to MACH_XIAOMI_SWEET, not v2's ARCH_SM6150:
 beta1 builds sweet on ARCH_SDMMAGPIE and ARCH_SM6150 is disabled. This scoping
 is not evidence of explicit sweet2 hardware support; that remains unverified.
