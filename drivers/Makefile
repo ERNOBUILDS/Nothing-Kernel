@@ -194,3 +194,6 @@ obj-$(CONFIG_ESOC)              += esoc/
 # GNSS driver
 obj-$(CONFIG_GNSS_SIRF)		+= gnsssirf/
 obj-$(CONFIG_GNSS)		+= gnss/
+
+# KernelSU driver, pinned from the replacement maintainer's external CI input.
+obj-$(CONFIG_KSU)			+= kernelsu/
