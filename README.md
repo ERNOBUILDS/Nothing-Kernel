@@ -51,3 +51,30 @@ changed by these ports; inherited KernelSU/SUSFS behavior is not reworked.
 No overclock, GPU tuning, pstore/observer, thermal bypass or F2FS safeguard
 weakening is included. Actual CPU OPP reachability and Franco-write persistence
 remain runtime questions under the owner's no-device-testing override.
+
+## NORMAL configuration and packaging
+
+`nothing-v3-perf` retains the replacement base values: `CONFIG_MODULE_SIG=n`,
+`CONFIG_MODULE_SIG_FORCE` inactive/n, and `CONFIG_USB_NET_SR9700=n`.
+No module-signing identity assertion or private signing key is committed.
+KEREM is paused by the owner because its MODULE_SIG=y requirement conflicts
+with the rule permitting only SR9700/SIG_FORCE family differences on this base.
+No KEREM branch/build is created; nothing is pushed or authenticated to GitHub.
+
+`CONFIG_CPU_FREQ_SWEET2_PERFORMANCE=y` deliberately retains performance for valid
+ROM/app governor requests on policies 0/6. Readback reports the effective governor;
+other requested governor names need the boot-scoped opt-out to become active.
+All min/max writes, thermal ceilings and detected OPP limits remain intact.
+See [the policy scope](Documentation/cpu-freq/sweet2-performance.txt).
+
+NORMAL OEM and AOSP are separate **v3-UNBOOTED-TEST** packages made from the same
+host-verified Image.gz. Both reuse the unchanged repack1 exact-model gate and
+reject mismatched, unknown or conflicting ROM categories before boot access.
+The booted v2 core/boot-header handling is reused: installed ramdisk, DTB, DTBO
+and command line are preserved, with no new service/property/security modification.
+Gate/control-flow tests on the host are not a boot-image or recovery device test.
+
+Fresh installed boot/dtbo/vbmeta/vbmeta_system/vbmeta_vendor backups must be taken
+and size/hash verified by the owner before installation. No fresh device readback
+or test occurs during this delivery. Package READMEs and host-side INSTALL/ROLLBACK
+helpers document that separate owner-run step and the booted v2 fallback.
